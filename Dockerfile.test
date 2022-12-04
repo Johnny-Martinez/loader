@@ -1,4 +1,7 @@
 FROM python:3.7.3
+
 WORKDIR /ap.
+
 COPY test_main.py .
+
 COPY movies.json .
