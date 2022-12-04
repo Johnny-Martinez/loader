@@ -1,6 +1,6 @@
 FROM python:3.7.3
 
-WORKDIR /ap.
+WORKDIR /app .
 
 COPY test_main.py .
 
