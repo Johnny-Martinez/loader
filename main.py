@@ -1,6 +1,6 @@
 import json
 import boto3
-import o
+import os
 
 sqs = boto3.client('sqs', region_name=os.environ['AWS_REGION'])
 
