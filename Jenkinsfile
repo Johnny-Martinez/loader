@@ -1,3 +1,4 @@
+def imageName = 'johnnym/movies-loader'
 node('workers'){
     stage('Checkout'){
         checkout scm
