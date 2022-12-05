@@ -1,66 +1,38 @@
-def imageName = 'johnnym/movies-loader'
+def imageName = 'mlabouardy/movies-loader'
 
-node('workers') {
-    stage('Checkout') {
+
+node('workers'){
+    stage('Checkout'){
         checkout scm
     }
 
-    stage('Unit Tests') {
+    stage('Unit Tests'){
         def imageTest= docker.build("${imageName}-test", "-f Dockerfile.test .")
-        imageTest.inside {
+        imageTest.inside{
             sh "python test_main.py"
         }
     }
+
+    stage('Build'){
+        docker.build(imageName)
+    }
+
+    stage('Push'){
+        docker.withRegistry(registry, 'registry') {
+            docker.image(imageName).push(commitID())
+
+            if (env.BRANCH_NAME == 'develop') {
+                docker.image(imageName).push('develop')
+            }
+        }
+    }
+
+    stage('Analyze'){
+        def scannedImage = "${registry}/${imageName}:${commitID()} ${workspace}/Dockerfile"
+        writeFile file: 'images', text: scannedImage
+        anchore name: 'images'
+    }
 }
-    //     stage('Build') {
-    //         docker.build(imageName)
-    //     }
-
-    //     stage('Push') {
-    //         sh "\$(aws ecr get-login --no-include-email --region ${region}) || true"
-    //         docker.withRegistry("https://${registry}") {
-    //             docker.image(imageName).push(commitID())
-
-    //             if (env.BRANCH_NAME == 'develop') {
-    //                 docker.image(imageName).push('develop')
-    //             }
-
-    //             if (env.BRANCH_NAME == 'preprod') {
-    //                 docker.image(imageName).push('preprod')
-    //             }
-
-    //             if (env.BRANCH_NAME == 'master') {
-    //                 docker.image(imageName).push('latest')
-    //             }
-    //         }
-    //     }
-
-    //     stage('Analyze'){
-    //         def scannedImage = "${registry}/${imageName}:${commitID()} ${workspace}/Dockerfile"
-    //         writeFile file: 'images', text: scannedImage
-    //         anchore name: 'images'
-    //     }
-
-    //     stage('Deploy'){
-    //         if(env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'preprod'){
-    //             build job: "watchlist-deployment/${env.BRANCH_NAME}"
-    //         }
-
-    //         if(env.BRANCH_NAME == 'master'){
-    //             timeout(time: 2, unit: "HOURS") {
-    //                 input message: "Approve Deploy?", ok: "Yes"
-    //             }
-    //             build job: "watchlist-deployment/master"
-    //         }
-    //     }
-    // } catch(e){
-    //     currentBuild.result = 'FAILED'
-    //     throw e
-    // } finally {
-    //     notifySlack(currentBuild.result)
-    // }
-// }
-
 
 def commitID() {
     sh 'git rev-parse HEAD > .git/commitID'
@@ -68,3 +40,4 @@ def commitID() {
     sh 'rm .git/commitID'
     commitID
 }
+
