@@ -8,7 +8,8 @@ node('workers'){
         def imageTest= docker.build("${imageName}-test", "-f Dockerfile.test .")
         imageTest.inside{
             sh "python test_main.py"
-            junit "$PWD/reports/*.xml"
+            sh "docker cp $WORKSPACE"
+            junit "${env.WORKSPACE}/reports/*.xml"
         }
     }
 }
