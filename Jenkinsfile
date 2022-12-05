@@ -1,17 +1,14 @@
 def imageName = 'mlabouardy/movies-loader'
-node('workers'){
-    stage('Checkout'){
+node('workers') {
+    stage('Checkout') {
         checkout scm
     }
 
-    stage('Unit Tests'){
+    stage('Unit Tests') {
         def imageTest= docker.build("${imageName}-test", "-f Dockerfile.test .")
-        imageTest.inside{
-            echo pwd
+        imageTest.inside {
             sh "python test_main.py"
-            sh "pwd"
-            sh "docker cp $WORKSPACE"
-            junit "${env.WORKSPACE}/reports/*.xml"
+            junit "**/reports/*.xml"
         }
     }
 }
